@@ -36,6 +36,10 @@ class FirebaseService {
   // Authentication methods
   async registerUser(email: string, password: string, userData: Partial<User>): Promise<User | null> {
     try {
+      if (!auth || !db) {
+        console.error('Firebase not initialized. Cannot register user.');
+        return null;
+      }
       const userCredential = await createUserWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
 
@@ -67,6 +71,10 @@ class FirebaseService {
 
   async loginUser(email: string, password: string): Promise<User | null> {
     try {
+      if (!auth || !db) {
+        console.error('Firebase not initialized. Cannot login user.');
+        return null;
+      }
       const userCredential = await signInWithEmailAndPassword(auth, email, password);
       const firebaseUser = userCredential.user;
 
@@ -99,6 +107,10 @@ class FirebaseService {
 
   async logoutUser(): Promise<void> {
     try {
+      if (!auth || !db) {
+        console.error('Firebase not initialized. Cannot logout user.');
+        return;
+      }
       const currentUser = auth.currentUser;
       if (currentUser) {
         // End login session
@@ -118,12 +130,20 @@ class FirebaseService {
   }
 
   onAuthStateChanged(callback: (user: FirebaseUser | null) => void) {
+    if (!auth) {
+      console.warn('Firebase auth not initialized. Returning no-op unsubscribe function.');
+      return () => {}; // Return no-op unsubscribe function
+    }
     return onAuthStateChanged(auth, callback);
   }
 
   // User operations
   async addUser(user: User): Promise<void> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot add user.');
+        return;
+      }
       await doc(db, 'users', user.id);
       await updateDoc(doc(db, 'users', user.id), {
         ...user,
@@ -137,6 +157,10 @@ class FirebaseService {
 
   async updateUser(user: User): Promise<void> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot update user.');
+        return;
+      }
       const userRef = doc(db, 'users', user.id);
       await updateDoc(userRef, {
         ...user,
@@ -149,6 +173,10 @@ class FirebaseService {
 
   async getUser(userId: string): Promise<User | null> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot get user.');
+        return null;
+      }
       const userDoc = await getDoc(doc(db, 'users', userId));
       return userDoc.exists() ? userDoc.data() as User : null;
     } catch (error) {
@@ -159,6 +187,10 @@ class FirebaseService {
 
   async getAllUsers(): Promise<User[]> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot get users.');
+        return [];
+      }
       const usersSnapshot = await getDocs(collection(db, 'users'));
       return usersSnapshot.docs.map(doc => doc.data() as User);
     } catch (error) {
@@ -170,6 +202,10 @@ class FirebaseService {
   // Component operations
   async addComponent(component: Component): Promise<void> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot add component.');
+        return;
+      }
       await addDoc(collection(db, 'components'), {
         ...component,
         createdAt: serverTimestamp(),
@@ -182,6 +218,10 @@ class FirebaseService {
 
   async updateComponent(component: Component): Promise<void> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot update component.');
+        return;
+      }
       const componentRef = doc(db, 'components', component.id);
       await updateDoc(componentRef, {
         ...component,
@@ -194,6 +234,10 @@ class FirebaseService {
 
   async deleteComponent(componentId: string): Promise<void> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot delete component.');
+        return;
+      }
       await deleteDoc(doc(db, 'components', componentId));
     } catch (error) {
       console.error('Error deleting component:', error);
@@ -202,6 +246,10 @@ class FirebaseService {
 
   async getComponents(): Promise<Component[]> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot get components.');
+        return [];
+      }
       const componentsSnapshot = await getDocs(collection(db, 'components'));
       return componentsSnapshot.docs.map(doc => ({
         id: doc.id,
@@ -216,6 +264,10 @@ class FirebaseService {
   // Request operations
   async addRequest(request: BorrowRequest): Promise<void> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot add request.');
+        return;
+      }
       await addDoc(collection(db, 'requests'), {
         ...request,
         createdAt: serverTimestamp(),
@@ -228,6 +280,10 @@ class FirebaseService {
 
   async updateRequest(request: BorrowRequest): Promise<void> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot update request.');
+        return;
+      }
       const requestRef = doc(db, 'requests', request.id);
       await updateDoc(requestRef, {
         ...request,
@@ -240,6 +296,10 @@ class FirebaseService {
 
   async getRequests(): Promise<BorrowRequest[]> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot get requests.');
+        return [];
+      }
       const requestsSnapshot = await getDocs(
         query(collection(db, 'requests'), orderBy('createdAt', 'desc'))
       );
@@ -255,6 +315,10 @@ class FirebaseService {
 
   async getUserRequests(userId: string): Promise<BorrowRequest[]> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot get user requests.');
+        return [];
+      }
       const requestsSnapshot = await getDocs(
         query(
           collection(db, 'requests'),
@@ -275,6 +339,10 @@ class FirebaseService {
   // Notification operations
   async addNotification(notification: Notification): Promise<void> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot add notification.');
+        return;
+      }
       await addDoc(collection(db, 'notifications'), {
         ...notification,
         createdAt: serverTimestamp()
@@ -286,6 +354,10 @@ class FirebaseService {
 
   async getUserNotifications(userId: string): Promise<Notification[]> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot get notifications.');
+        return [];
+      }
       const notificationsSnapshot = await getDocs(
         query(
           collection(db, 'notifications'),
@@ -305,6 +377,10 @@ class FirebaseService {
 
   async markNotificationAsRead(notificationId: string): Promise<void> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot mark notification as read.');
+        return;
+      }
       const notificationRef = doc(db, 'notifications', notificationId);
       await updateDoc(notificationRef, {
         read: true,
@@ -318,6 +394,10 @@ class FirebaseService {
   // Login session operations
   async createLoginSession(user: User): Promise<LoginSession> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot create login session.');
+        throw new Error('Firebase not initialized');
+      }
       const session: LoginSession = {
         id: `session-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
         userId: user.id,
@@ -345,6 +425,10 @@ class FirebaseService {
 
   async endLoginSession(userId: string): Promise<void> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot end login session.');
+        return;
+      }
       const sessionsSnapshot = await getDocs(
         query(
           collection(db, 'loginSessions'),
@@ -374,6 +458,10 @@ class FirebaseService {
 
   async getLoginSessions(): Promise<LoginSession[]> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot get login sessions.');
+        return [];
+      }
       const sessionsSnapshot = await getDocs(
         query(collection(db, 'loginSessions'), orderBy('createdAt', 'desc'))
       );
@@ -389,6 +477,10 @@ class FirebaseService {
 
   // Real-time listeners
   onComponentsChange(callback: (components: Component[]) => void) {
+    if (!db) {
+      console.warn('Firebase Firestore not initialized. Returning no-op unsubscribe function.');
+      return () => {}; // Return no-op unsubscribe function
+    }
     return onSnapshot(collection(db, 'components'), (snapshot) => {
       const components = snapshot.docs.map(doc => ({
         id: doc.id,
@@ -399,6 +491,10 @@ class FirebaseService {
   }
 
   onRequestsChange(callback: (requests: BorrowRequest[]) => void) {
+    if (!db) {
+      console.warn('Firebase Firestore not initialized. Returning no-op unsubscribe function.');
+      return () => {}; // Return no-op unsubscribe function
+    }
     return onSnapshot(
       query(collection(db, 'requests'), orderBy('createdAt', 'desc')),
       (snapshot) => {
@@ -412,6 +508,10 @@ class FirebaseService {
   }
 
   onUserNotificationsChange(userId: string, callback: (notifications: Notification[]) => void) {
+    if (!db) {
+      console.warn('Firebase Firestore not initialized. Returning no-op unsubscribe function.');
+      return () => {}; // Return no-op unsubscribe function
+    }
     return onSnapshot(
       query(
         collection(db, 'notifications'),
@@ -439,6 +539,10 @@ class FirebaseService {
   // Migration method to move existing localStorage data to Firebase
   async migrateLocalDataToFirebase(): Promise<void> {
     try {
+      if (!db) {
+        console.error('Firebase Firestore not initialized. Cannot migrate data.');
+        return;
+      }
       const localData = localStorage.getItem('isaacLabData');
       if (!localData) return;
 
