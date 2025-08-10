@@ -28,29 +28,46 @@ const requiredEnvVars = [
 const missingEnvVars = requiredEnvVars.filter(envVar => !import.meta.env[envVar]);
 
 if (missingEnvVars.length > 0) {
-  console.error('Missing required Firebase environment variables:', missingEnvVars);
-  console.error('Please check your .env file and ensure all Firebase config values are set.');
+  console.warn('Missing required Firebase environment variables:', missingEnvVars);
+  console.warn('Please check your .env file and ensure all Firebase config values are set.');
+  console.warn('The app will continue with localStorage-only functionality until Firebase is configured.');
 }
 
-// Initialize Firebase
-const app = initializeApp(firebaseConfig);
+// Initialize Firebase only if all required config is present
+let app: any = null;
+let auth: any = null;
+let db: any = null;
+let analytics: any = null;
 
-// Initialize Firebase Authentication and get a reference to the service
-export const auth = getAuth(app);
+try {
+  if (missingEnvVars.length === 0) {
+    // Initialize Firebase
+    app = initializeApp(firebaseConfig);
 
-// Initialize Cloud Firestore and get a reference to the service
-export const db = getFirestore(app);
+    // Initialize Firebase Authentication and get a reference to the service
+    auth = getAuth(app);
 
-// Initialize Analytics (optional)
-export const analytics = typeof window !== 'undefined' && import.meta.env.VITE_FIREBASE_MEASUREMENT_ID 
-  ? getAnalytics(app) 
-  : null;
+    // Initialize Cloud Firestore and get a reference to the service
+    db = getFirestore(app);
 
-// Connect to emulators in development (optional)
-if (process.env.NODE_ENV === 'development') {
-  // Uncomment these lines if you want to use Firebase emulators for local development
-  // connectAuthEmulator(auth, 'http://localhost:9099');
-  // connectFirestoreEmulator(db, 'localhost', 8080);
+    // Initialize Analytics (optional)
+    analytics = typeof window !== 'undefined' && import.meta.env.VITE_FIREBASE_MEASUREMENT_ID 
+      ? getAnalytics(app) 
+      : null;
+    // Connect to emulators in development (optional)
+    if (process.env.NODE_ENV === 'development') {
+      // Uncomment these lines if you want to use Firebase emulators for local development
+      // connectAuthEmulator(auth, 'http://localhost:9099');
+      // connectFirestoreEmulator(db, 'localhost', 8080);
+    }
+  } else {
+    console.warn('Firebase not initialized due to missing environment variables. Using localStorage fallback.');
+  }
+} catch (error) {
+  console.error('Failed to initialize Firebase:', error);
+  console.warn('Falling back to localStorage-only functionality.');
 }
 
+// Export Firebase services (may be null if not initialized)
+export { auth, db, analytics };
 export default app;
